@@ -187,7 +187,7 @@ val retrofif = Retrofit.Builder()
     .addConverterFactory(GsonConverterFactory.create())
     .build()
 
-Теперь в панели Run у нас будет выводиться логирование при отправке и получении данных по сети.
+Теперь в панели Logcat у нас будет выводиться логирование при отправке и получении данных по сети.
 
 
 
