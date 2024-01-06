@@ -162,11 +162,32 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+------------------------------------------
 
+Часто бывает такое, что при работе с retrofit что-то не работает, и при этом мы не знаем, какой запрос отправил ретрофит, или неправильно приняли данные. Короче надо видеть, какие запросы мы отправляем и что получаем. Мы можем сделать это с помощью библиотеки OkHttp
 
+implementation("com.squareup.okhttp3:okhttp:4.12.0")
+implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+Сначала мы создаём интерсептор:
 
+val interceptor = HttpLoggingInterceptor()
+interceptor.level = HttpLoggingInterceptor.Level.BODY
 
+в свойстве level мы будем указывать Что мы перехватываем - в данном случае - тело. 
+При создании экземпляра ретрофита мы можем в параметре client указать объект OkHttpClient, который будет заниматься логингом:
+
+val client = OkHttpClient.Builder()
+    .addInterceptor(interceptor)
+    .build()
+
+val retrofif = Retrofit.Builder()
+    .baseUrl("https://dummyjson.com")
+    .client(client)
+    .addConverterFactory(GsonConverterFactory.create())
+    .build()
+
+Теперь в панели Run у нас будет выводиться логирование при отправке и получении данных по сети.
 
 
 
