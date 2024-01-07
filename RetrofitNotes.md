@@ -233,8 +233,8 @@ data class User(
 
 ```json
 {
-  username: 'kminchelle',
-  password: '0lelplR'
+  "username": "kminchelle",
+  "password": "0lelplR"
 }
 ```
 
@@ -299,9 +299,6 @@ val user = mainApi.auth(
       "thumbnail": "...",
       "images": ["...", "...", "..."]
     },
-    {...},
-    {...},
-    {...}
     // 30 items
   ],
 
