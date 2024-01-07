@@ -417,11 +417,11 @@ interface MainAPI {
 ```kotlin
 interface MainAPI {
     ...
-    @HEADERS(
+    @Headers(
         "Content-Type: application/json"
     )
     @GET("auth/products/search")
-    suspend fun getProductsByName(@HEADER("Authorization") token: String, @Query("q") name: String): Products
+    suspend fun getProductsByName(@Header("Authorization") token: String, @Query("q") name: String): Products
 }
 ```
 
