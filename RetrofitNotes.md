@@ -213,7 +213,7 @@ val retrofit = Retrofit.Builder()
 }
 ```
 
-, где token - это токен доступа, ... 
+, где token - это токен доступа: он необходим для получения доступа к данным пользователя, ... 
 Для отправки запроса мы будем использовать запрос POST и передать в теле(body) username и password
 ```kotlin
 data class User(
@@ -233,8 +233,8 @@ data class User(
 
 ```json
 {
-    username: 'kminchelle',
-    password: '0lelplR'
+  username: 'kminchelle',
+  password: '0lelplR'
 }
 ```
 
@@ -278,6 +278,184 @@ val user = mainApi.auth(
     )
 )
 ```
+
+------------------------------------------------
+
+Теперь получим весь список:
+
+```json
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "iPhone 9",
+      "description": "An apple mobile which is nothing like apple",
+      "price": 549,
+      "discountPercentage": 12.96,
+      "rating": 4.69,
+      "stock": 94,
+      "brand": "Apple",
+      "category": "smartphones",
+      "thumbnail": "...",
+      "images": ["...", "...", "..."]
+    },
+    {...},
+    {...},
+    {...}
+    // 30 items
+  ],
+
+  "total": 100,
+  "skip": 0,
+  "limit": 30
+}
+```
+
+Для отправки запроса мы будем использовать запрос GET
+
+```kotlin
+data class Products(
+  val products: List<Product>
+)
+```
+
+Т.о. мы можем указывать не все поля, а только те, которые нам нужны.
+
+```kotlin
+import retrofit2.http.GET
+
+interface MainAPI {
+    @GET("products/{id}")
+    suspend fun getProductById(@Path("id") id: Int): Product
+
+    @POST("auth/login")
+    suspend fun auth(@Body authRequest: AuthRequestBody): User
+
+    @GET("products")
+    suspend fun getAllProducts(): Products
+}
+```
+
+```kotlin
+val mainApi = retrofit.create(MainAPI::class.java)
+...
+val productsObject = mainApi.getAllProducts()
+title = productsObject.products[1].orEmpty()
+```
+
+------------------------------------------------
+
+Теперь сделаем поиск продуктов - мы моожем передавать параметры поиска. Как именно их указывать в запросе - зависит от разработчиков на сервере. Мы также получаем список продуктов. Будем отправлять запрос на 'https://dummyjson.com/products/search?q=phone', где q - имя параметра.
+
+```kotlin
+data class Products(
+  val products: List<Product>
+)
+```
+
+```kotlin
+interface MainAPI {
+    @GET("products/{id}")
+    suspend fun getProductById(@Path("id") id: Int): Product
+
+    @POST("auth/login")
+    suspend fun auth(@Body authRequest: AuthRequestBody): User
+
+    @GET("products")
+    suspend fun getAllProducts(): Products
+
+    @GET("products/search")
+    suspend fun getProductsByName(@Query("q") name: String): Products
+}
+```
+
+Библиотека Retrofit сама будет добавлять парметры в запрос - какие именно параметры нужно передать мы указали с помощью аннотациии @Query.
+
+```kotlin
+val mainApi = retrofit.create(MainAPI::class.java)
+...
+val productsObject = mainApi.getProductsByName( имя )
+title = productsObject.products[1].orEmpty()
+```
+
+------------------------------------------------
+
+теперь попробуем получить доступ к данным пользователя. Для этого мы будем стучаться по адресу 'https://dummyjson.com/auth/RESOURCE', т.е. мы указываем все пути так же, то перед ними, но после адреса сервера дописываем auth/ , и тогда мы будем действовать как авторизированный пользователь.
+
+```kotlin
+interface MainAPI {
+    ...
+    @GET("auth/products/search")
+    suspend fun getProductsByName(@Query("q") name: String): Products
+}
+```
+
+Если мы действуем как авторизированный пользователь, то нужно предоставить токен, который мы получили при логировании. В таком случае вместе с запросом @GET мы должны передать объект заголовок(header), в который мы поместим токен. 
+
+```json
+{
+  'Authorization': 'Bearer /* YOUR_TOKEN_HERE */', 
+  'Content-Type': 'application/json'
+},
+```
+
+Укажем их:
+
+```kotlin
+interface MainAPI {
+    ...
+    @HEADERS(
+        "Content-Type: application/json"
+    )
+    @GET("auth/products/search")
+    suspend fun getProductsByName(@Query("q") name: String): Products
+}
+```
+
+Через аннотацию @HEADERS мы указываем через запятую статические заголовки. Для указания динамических заголовков, например, токена(он динамический, т.к. он обычно выдаётся на какой-то промежуток времени, а значит он меняется, и потому его нельзя зашить - сделать статическим), мы должны использовать аннотацию @HEADER("headerName") name: type, например:
+
+```kotlin
+interface MainAPI {
+    ...
+    @HEADERS(
+        "Content-Type: application/json"
+    )
+    @GET("auth/products/search")
+    suspend fun getProductsByName(@HEADER("Authorization") token: String, @Query("q") name: String): Products
+}
+```
+
+Если мы не передаём токен в заголовках, то у нас будет исключение, а сервер вернёт сообщение: {"message": "Authentication Problem"} - у нас нет разрешения для получения данных пользователя.
+
+Пробуем получить доступ:
+
+```kotlin
+val mainApi = retrofit.create(MainAPI::class.java)
+...
+var user: User? = null
+user = mainApi.auth(
+    AuthRequestBody(
+        username = ...
+        password = ...
+    )
+)
+...
+val productsObject = mainApi.getProductsByName(user?.token ?: "", имя )
+title = productsObject.products[1].orEmpty()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```
