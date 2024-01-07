@@ -340,7 +340,7 @@ interface MainAPI {
 val mainApi = retrofit.create(MainAPI::class.java)
 ...
 val productsObject = mainApi.getAllProducts()
-title = productsObject.products[1].orEmpty()
+title = productsObject.products[1].title.orEmpty()
 ```
 
 ------------------------------------------------
@@ -375,7 +375,7 @@ interface MainAPI {
 val mainApi = retrofit.create(MainAPI::class.java)
 ...
 val productsObject = mainApi.getProductsByName( имя )
-title = productsObject.products[1].orEmpty()
+title = productsObject.products[1].title.orEmpty()
 ```
 
 ------------------------------------------------
@@ -441,7 +441,7 @@ user = mainApi.auth(
 )
 ...
 val productsObject = mainApi.getProductsByName(user?.token ?: "", имя )
-title = productsObject.products[1].orEmpty()
+title = productsObject.products[1].title.orEmpty()
 ```
 
 
