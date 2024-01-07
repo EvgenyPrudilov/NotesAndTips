@@ -391,9 +391,9 @@ interface MainAPI {
 
 ```json
 {
-  'Authorization': 'Bearer /* YOUR_TOKEN_HERE */', 
-  'Content-Type': 'application/json'
-},
+  "Authorization": "Bearer /* YOUR_TOKEN_HERE */", 
+  "Content-Type": "application/json"
+}
 ```
 
 Укажем их:
