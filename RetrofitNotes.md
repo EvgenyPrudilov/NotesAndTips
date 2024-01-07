@@ -10,19 +10,19 @@ implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 Т.к. мы подключили GSON конвертор, то он он сам будет преобразовывать JSON в наш DataClass:
 
 ```json
-// {
-//   "id": 1,
-//   "title": "iPhone 9",
-//   "description": "An apple mobile which is nothing like apple",
-//   "price": 549,
-//   "discountPercentage": 12.96,
-//   "rating": 4.69,
-//   "stock": 94,
-//   "brand": "Apple",
-//   "category": "smartphones",
-//   "thumbnail": "...",
-//   "images": ["...", "...", "..."]
-// }
+{
+   "id": 1,
+   "title": "iPhone 9",
+   "description": "An apple mobile which is nothing like apple",
+   "price": 549,
+   "discountPercentage": 12.96,
+   "rating": 4.69,
+   "stock": 94,
+   "brand": "Apple",
+   "category": "smartphones",
+   "thumbnail": "...",
+   "images": ["...", "...", "..."]
+}
 ```
 
 в
@@ -49,7 +49,7 @@ data class Product (
 import retrofit2.http.GET
 
 interface ProductAPI {
-    @GET("product/1")
+    @GET("products/1")
     suspend fun getProductById(): Product
 }
 ```
@@ -195,4 +195,89 @@ val retrofit = Retrofit.Builder()
 ```
 
 Теперь в панели `Logcat` у нас будет выводиться логирование при отправке и получении данных по сети.
+
+------------------------------------------------
+
+Теперь поработаем с аутентификацией. Мы будем отправлять имя пользователя(username: 'kminchelle') и пароль(password: '0lelplR'), и если такой имеется, то нам выдадут результат:
+
+```json
+{
+  "id": 15,
+  "username": "kminchelle",
+  "email": "kminchelle@qq.com",
+  "firstName": "Jeanne",
+  "lastName": "Halvorson",
+  "gender": "female",
+  "image": "https://robohash.org/autquiaut.png?size=50x50&set=set1",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsInVzZXJuYW1lIjoia21pbmNoZWxsZSIsImVtYWlsIjoia21pbmNoZWxsZUBxcS5jb20iLCJmaXJzdE5hbWUiOiJKZWFubmUiLCJsYXN0TmFtZSI6IkhhbHZvcnNvbiIsImdlbmRlciI6ImZlbWFsZSIsImltYWdlIjoiaHR0cHM6Ly9yb2JvaGFzaC5vcmcvYXV0cXVpYXV0LnBuZz9zaXplPTUweDUwJnNldD1zZXQxIiwiaWF0IjoxNjM1NzczOTYyLCJleHAiOjE2MzU3Nzc1NjJ9.n9PQX8w8ocKo0dMCw3g8bKhjB8Wo7f7IONFBDqfxKhs"
+}
+```
+
+, где token - это токен доступа, ... 
+Для отправки запроса мы будем использовать запрос POST и передать в теле(body) username и password
+```kotlin
+data class User(
+  val id: Int,
+  val username: String",
+  val email: String,
+  val firstName: String,
+  val lastName: String,
+  val gender: String,
+  val image: String,
+  val token: String
+)
+```
+
+Важно создавать идентификаторы в таком же регистре, как указано на сервере - иначе мы не сможем их принять(они сравниваются по именам).
+Создадим класс, в котором будут данные для запроса - тело запроса(body):
+
+```json
+{
+    username: 'kminchelle',
+    password: '0lelplR'
+}
+```
+
+```kotlin
+data class AuthRequestBody(
+    val username: String,
+    val password: String
+)
+```
+
+Теперь нужно изменить интерфейс для библиотеки retrofit:
+
+```kotlin
+import retrofit2.http.GET
+
+interface MainAPI {
+    @GET("products/{id}")
+    suspend fun getProductById(@Path("id") id: Int): Product
+
+    @POST("auth/login")
+    suspend fun auth(@Body authRequest: AuthRequestBody): User
+}
+```
+
+С помощью аннотации @POST мы указываем, что мы отправляем запрос на сервер и указываем пусть в аргементе(относительно адреса сервера).
+С помощью аннотации @Body мы указываем тело запроса - объект, который мы передадим при отправке запроса. В ответ мы получим объект типа User.
+
+Для отображения картинок мы будем использовать библиотеку Coil:
+
+```kotlin
+runtimeOnly("io.coil-kt:coil:2.5.0")
+```
+
+```kotlin
+val mainApi = retrofit.create(MainAPI::class.java)
+...
+val user = mainApi.auth(
+    AuthRequestBody(
+        username = ...
+        password = ...
+    )
+)
+```
+
+
 ```
