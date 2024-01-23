@@ -208,3 +208,57 @@ fun MainScreen(
 }
 ```
 
+Можно сделать работу с состоянием проще:
+
+```
+...
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("data_store")
+class DataStoreManager(val context: Context) {
+    suspend fun saveSettings(settingsData: SettingsData) {
+        context.dataStore.edit { pref ->
+            pref[intPreferencesKey("text_size")] = settingsData.textSize
+            pref[longPreferencesKey("bg_color")] = settingsData.bgColor.toLong()
+        }
+    }
+
+    fun getSettings() = context.dataStore.data.map { pref ->
+        return@map SettingsData(
+            pref[intPreferencesKey("text_size")] ?: 40,
+            pref[longPreferencesKey("bg_color")]?.toULong() ?: Red.value
+        )
+
+    }
+}
+...
+val dataStoreManager = DataStoreManager(this)
+...
+setContent {
+    Log.d("*_*", "setContent")
+    DataStore1Theme {
+        val settingsState = dataStoreManager
+            .getSettings()
+            .collectAsState(initial = SettingsData())
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(settingsState.value.bgColor)
+        ) {
+            Log.d("*_*", "\tSurface")
+            MainScreen(dataStoreManager, settingsState.value.textSize)
+        }
+    }
+}
+...
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
