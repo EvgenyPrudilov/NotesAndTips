@@ -1,4 +1,4 @@
-Применение DataStore для хранения примитивных данных таких как: Int, Boolean, Long и.т.д
+Применение Preference DataStore для хранения примитивных данных таких как: Int, Boolean, Long и.т.д
 
 Необходимая зависимость:
 
@@ -78,4 +78,133 @@ setContent {
 bgColor - наше состоянеие. При его изменении, у нас будет перерисовываться Surface, т.к. его параметр color зависит от bgColor
 
 Получать данные и их изменять мы можем только в корутин скоуп. Для этого можно использовать LaunchedEffect - у неё параметром будет suspend лямбда, в который мы уже можем вызывать:
+
+```
+LaunchedEffect(key1 = true) {
+    Log.d("*_*", "\tLaunchedEffect")
+    dataStoreManager.getSettings().collect { settings ->
+        bgColorState.value = settings.bgColor.toULong()
+        textSizeState.value = settings.textSize
+    }
+}
+```
+
+Полный код:
+
+```
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val dataStoreManager = DataStoreManager(this)
+
+        setContent {
+            Log.d("*_*", "setContent")
+            DataStore1Theme {
+                val bgColorState = remember {
+                    mutableStateOf(Red.value)
+                }
+                val textSizeState = remember {
+                    mutableStateOf(40)
+                }
+                LaunchedEffect(key1 = true) {
+                    Log.d("*_*", "\tLaunchedEffect")
+                    dataStoreManager.getSettings().collect { settings ->
+                        bgColorState.value = settings.bgColor.toULong()
+                        textSizeState.value = settings.textSize
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color(bgColorState.value)
+                ) {
+                    Log.d("*_*", "\tSurface")
+                    MainScreen(dataStoreManager, textSizeState)
+                }
+            }
+//            MyComposable()
+        }
+    }
+}
+
+@Composable
+fun MainScreen(
+    dataStoreManager: DataStoreManager,
+    textSizeState: MutableState<Int>
+) {
+    Log.d("*_*", "\t\tMainScreen")
+    val coroutine = rememberCoroutineScope()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+        ,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Log.d("*_*", "\t\t\tColumn")
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.5f)
+                .wrapContentHeight(align = Alignment.CenterVertically)
+                .wrapContentWidth(align = Alignment.CenterHorizontally)
+        ) {
+            Log.d("*_*", "\t\t\t\tBox")
+            Text(
+                text = "text",
+                color = Color.White,
+                fontSize = textSizeState.value.sp
+            )
+        }
+        Button(
+            onClick = {
+                Log.d("*_*", "\t\t\t\tButton Blue onClick")
+                coroutine.launch {
+                    dataStoreManager.saveSettings(
+                        SettingsData(
+                            textSize = 10,
+                            bgColor = Blue.value.toLong()
+                        )
+                    )
+                }
+            }
+        ) {
+            Text(text = "Blue")
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Button(
+            onClick = {
+                Log.d("*_*", "\t\t\t\tButton Red onClick")
+                coroutine.launch {
+                    dataStoreManager.saveSettings(
+                        SettingsData(
+                            textSize = 30,
+                            bgColor = Red.value.toLong()
+                        )
+                    )
+                }
+            }
+        ) {
+            Text(text = "Red")
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Button(
+            onClick = {
+                Log.d("*_*", "\t\t\t\tButton Green onClick")
+                coroutine.launch {
+                    dataStoreManager.saveSettings(
+                        SettingsData(
+                            textSize = 20,
+                            bgColor = Green.value.toLong()
+                        )
+                    )
+                }
+            }
+        ) {
+            Text(text = "Green")
+        }
+    }
+}
+```
 
